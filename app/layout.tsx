@@ -41,11 +41,9 @@ export default function RootLayout({
       <head>
         <meta name="google-site-verification" content="WAA2LtftXQI5NqpWhptEPk5DMJSerf6mkXs8ZUl4xyU" />
         <script
-          type="text/javascript"
-          src="//pl27296265.profitableratecpm.com/1a/c5/2c/1ac52c652a58eb1656d3a4d0b28df1e8.js"
-          async
-        ></script>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: `
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -61,10 +59,20 @@ export default function RootLayout({
     "priceCurrency": "USD"
   }
 }
-        ` }} />
+            `,
+          }}
+        />
       </head>
       <body className={GeistSans.className}>
         {children}
+
+        {/* ✅ Adsterra Monetization Script */}
+        <script
+          async
+          data-cfasync="false"
+          src="//pl22803049.toprevenuegate.com/c8ff6e8223b882964f1e53e213c5de76/invoke.js"
+        ></script>
+        <div id="container-c8ff6e8223b882964f1e53e213c5de76"></div>
       </body>
     </html>
   )
