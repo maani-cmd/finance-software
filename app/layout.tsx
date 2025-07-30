@@ -80,10 +80,11 @@ export default function RootLayout({
         {children}
 
         {/* ✅ Adsterra Monetization Script */}
-        <script type='text/javascript' 
-        src='//pl27296265.profitableratecpm.com/1a/c5/2c/1ac52c652a58eb1656d3a4d0b28df1e8.js'></script>
-        <div id="container-c8ff6e8223b882964f1e53e213c5de76"></div>
-      </body>
+        <script
+    type="text/javascript"
+    src="//pl27296265.profitableratecpm.com/1a/c5/2c/1ac52c652a58eb1656d3a4d0b28df1e8.js"
+  ></script>
+</body>
     </html>
   )
 }
