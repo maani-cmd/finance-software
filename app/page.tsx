@@ -524,9 +524,12 @@ export default function ComprehensiveAccountingApp() {
   }, [])
 
   // Save data to localStorage whenever transactions change
+  // Replace the "Save data to localStorage whenever transactions change" effect with this version to also handle empty arrays:
   useEffect(() => {
     if (transactions.length > 0) {
       localStorage.setItem("accounting-transactions", JSON.stringify(transactions))
+    } else {
+      localStorage.removeItem("accounting-transactions")
     }
   }, [transactions])
 
@@ -1646,7 +1649,7 @@ ${transactions
       `${t.date.toISOString().split("T")[0]} | ${t.type.toUpperCase()} | ${t.category} | Rs.${t.amount} | ${t.description}`,
   )
   .join("\n")}
-  `
+`
 
     downloadFile(content, "financial-report.txt", "text/plain")
   }
@@ -1718,7 +1721,7 @@ ${report.title}
 Generated: ${new Date().toLocaleDateString()}
 
 ${JSON.stringify(report.data, null, 2)}
-  `
+`
 
     downloadFile(content, `${report.title.toLowerCase().replace(/\s+/g, "-")}.txt`, "text/plain")
   }
@@ -2125,6 +2128,21 @@ ${JSON.stringify(report.data, null, 2)}
     setEditing(null)
   }
 
+  // Delete transaction by id (with localStorage sync for empty state)
+  const deleteTransaction = (id: string) => {
+    setTransactions((prev) => {
+      const next = prev.filter((t) => t.id !== id)
+      if (typeof window !== "undefined") {
+        if (next.length > 0) {
+          localStorage.setItem("accounting-transactions", JSON.stringify(next))
+        } else {
+          localStorage.removeItem("accounting-transactions")
+        }
+      }
+      return next
+    })
+  }
+
   if (!userType) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -2500,6 +2518,18 @@ ${JSON.stringify(report.data, null, 2)}
                               <Pencil className="h-3 w-3 mr-1" />
                               Edit
                             </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm("Delete this transaction? This cannot be undone.")) {
+                                  deleteTransaction(transaction.id)
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Delete
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -2745,6 +2775,18 @@ ${JSON.stringify(report.data, null, 2)}
                           >
                             <Pencil className="h-3 w-3 mr-1" />
                             Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm("Delete this transaction? This cannot be undone.")) {
+                                deleteTransaction(transaction.id)
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
                           </Button>
                         </div>
                       </div>
