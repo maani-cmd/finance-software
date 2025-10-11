@@ -78,15 +78,7 @@ export default function RootLayout({
       </head>
       <body className={GeistSans.className}>
         {children}
-
-        {/* ✅ Adsterra Monetization Script */}
-        <script
-          async
-          data-cfasync="false"
-          src="//pl22803049.toprevenuegate.com/c8ff6e8223b882964f1e53e213c5de76/invoke.js"
-        ></script>
-        <div id="container-c8ff6e8223b882964f1e53e213c5de76"></div>
-      </body>
+</body>
     </html>
   )
 }
