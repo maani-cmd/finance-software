@@ -52,6 +52,7 @@ import {
   BarChart3,
   TrendingDownIcon,
   TrendingUpIcon,
+  Pencil,
 } from "lucide-react"
 
 type UserType = "freelancer" | "entrepreneur" | "salaried" | "business-owner" | null
@@ -188,6 +189,10 @@ export default function ComprehensiveAccountingApp() {
     content: React.ReactNode
     data: any
   } | null>(null)
+
+  // State for editing transactions
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<Transaction | null>(null)
 
   // Advanced Mathematical Analysis Functions
   const calculateFinancialVelocity = (transactions: Transaction[]): number => {
@@ -1613,7 +1618,7 @@ export default function ComprehensiveAccountingApp() {
       },
     })
   }
-  // Export functions
+
   const exportToPDF = () => {
     const reportData = {
       title: "Financial Summary Report",
@@ -2113,6 +2118,13 @@ ${JSON.stringify(report.data, null, 2)}
     setIsAddTransactionOpen(false)
   }
 
+  // Update transaction function
+  const updateTransaction = (id: string, values: Omit<Transaction, "id">) => {
+    setTransactions((prev) => prev.map((t) => (t.id === id ? { id, ...values } : t)))
+    setEditDialogOpen(false)
+    setEditing(null)
+  }
+
   if (!userType) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -2233,7 +2245,34 @@ ${JSON.stringify(report.data, null, 2)}
                     onSubmit={addTransaction}
                     selectedType={selectedTransactionType}
                     onTypeChange={setSelectedTransactionType}
+                    submitLabel="Add Transaction" // Explicit submit label
                   />
+                </DialogContent>
+              </Dialog>
+
+              {/* Edit Transaction Dialog */}
+              <Dialog
+                open={editDialogOpen}
+                onOpenChange={(open) => {
+                  setEditDialogOpen(open)
+                  if (!open) setEditing(null)
+                }}
+              >
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Edit Transaction</DialogTitle>
+                    <DialogDescription>Update the details and save your changes</DialogDescription>
+                  </DialogHeader>
+                  {editing && (
+                    <TransactionForm
+                      userType={userType}
+                      initial={editing}
+                      selectedType={editing.type}
+                      onTypeChange={() => {}} // No-op for edit mode's type change
+                      onUpdate={updateTransaction}
+                      submitLabel="Save Changes"
+                    />
+                  )}
                 </DialogContent>
               </Dialog>
             </div>
@@ -2437,15 +2476,30 @@ ${JSON.stringify(report.data, null, 2)}
                               </p>
                             </div>
                           </div>
-                          <div
-                            className={`font-bold ${
-                              transaction.type === "income" || transaction.type === "sale"
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {transaction.type === "income" || transaction.type === "sale" ? "+" : "-"}Rs.
-                            {transaction.amount.toLocaleString()}
+                          {/* Updated block: amount + Edit button */}
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`font-bold ${
+                                transaction.type === "income" || transaction.type === "sale"
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }`}
+                            >
+                              {transaction.type === "income" || transaction.type === "sale" ? "+" : "-"}Rs.
+                              {transaction.amount.toLocaleString()}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-transparent"
+                              onClick={() => {
+                                setEditing(transaction)
+                                setEditDialogOpen(true)
+                              }}
+                            >
+                              <Pencil className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -2665,18 +2719,33 @@ ${JSON.stringify(report.data, null, 2)}
                             </div>
                           </div>
                         </div>
-                        <div
-                          className={`text-right ${
-                            transaction.type === "income" || transaction.type === "sale"
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          <p className="font-bold text-lg">
-                            {transaction.type === "income" || transaction.type === "sale" ? "+" : "-"}Rs.
-                            {transaction.amount.toLocaleString()}
-                          </p>
-                          <p className="text-sm text-gray-500">{transaction.currency}</p>
+                        {/* Updated block: amount + Edit button */}
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`text-right ${
+                              transaction.type === "income" || transaction.type === "sale"
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            <p className="font-bold text-lg">
+                              {transaction.type === "income" || transaction.type === "sale" ? "+" : "-"}Rs.
+                              {transaction.amount.toLocaleString()}
+                            </p>
+                            <p className="text-sm text-gray-500">{transaction.currency}</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-transparent"
+                            onClick={() => {
+                              setEditing(transaction)
+                              setEditDialogOpen(true)
+                            }}
+                          >
+                            <Pencil className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -3025,34 +3094,70 @@ ${JSON.stringify(report.data, null, 2)}
 
 interface TransactionFormProps {
   userType: UserType
-  onSubmit: (transaction: Omit<Transaction, "id">) => void
+  onSubmit?: (transaction: Omit<Transaction, "id">) => void
+  onUpdate?: (id: string, transaction: Omit<Transaction, "id">) => void
   selectedType: string
   onTypeChange: (type: string) => void
+  initial?: Transaction | null
+  submitLabel?: string
 }
 
-function TransactionForm({ userType, onSubmit, selectedType, onTypeChange }: TransactionFormProps) {
+function TransactionForm({
+  userType,
+  onSubmit,
+  onUpdate,
+  selectedType,
+  onTypeChange,
+  initial,
+  submitLabel = "Submit",
+}: TransactionFormProps) {
   const [formData, setFormData] = useState({
-    type: selectedType || "income",
-    amount: "",
-    category: "",
-    subcategory: "",
-    description: "",
-    date: new Date(),
-    paymentMethod: "",
-    client: "",
-    project: "",
-    taxDeductible: false,
-    currency: "PKR",
+    type: initial?.type || selectedType || "income",
+    amount: initial ? String(initial.amount) : "",
+    category: initial?.category || "",
+    subcategory: initial?.subcategory || "",
+    description: initial?.description || "",
+    date: initial?.date ? new Date(initial.date) : new Date(),
+    paymentMethod: initial?.paymentMethod || "",
+    client: initial?.client || "",
+    project: initial?.project || "",
+    taxDeductible: initial?.taxDeductible || false,
+    currency: initial?.currency || "PKR",
   })
+
+  useEffect(() => {
+    if (initial) {
+      setFormData({
+        type: initial.type,
+        amount: String(initial.amount),
+        category: initial.category,
+        subcategory: initial.subcategory || "",
+        description: initial.description,
+        date: initial.date ? new Date(initial.date) : new Date(),
+        paymentMethod: initial.paymentMethod,
+        client: initial.client || "",
+        project: initial.project || "",
+        taxDeductible: !!initial.taxDeductible,
+        currency: initial.currency || "PKR",
+      })
+    }
+  }, [initial])
+
+  useEffect(() => {
+    // Only reset category/subcategory if not in edit mode
+    if (!initial && selectedType) {
+      setFormData((prev) => ({ ...prev, type: selectedType, category: "", subcategory: "" }))
+    }
+  }, [selectedType, initial])
 
   const config = userTypeConfig[userType!]
   const availableCategories = config.categories[formData.type as keyof typeof config.categories] || []
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit({
+    const values: Omit<Transaction, "id"> = {
       type: formData.type as Transaction["type"],
-      amount: Number.parseFloat(formData.amount),
+      amount: Number.parseFloat(formData.amount || "0"),
       category: formData.category,
       subcategory: formData.subcategory,
       description: formData.description,
@@ -3062,14 +3167,14 @@ function TransactionForm({ userType, onSubmit, selectedType, onTypeChange }: Tra
       project: formData.project,
       taxDeductible: formData.taxDeductible,
       currency: formData.currency,
-    })
-  }
-
-  useEffect(() => {
-    if (selectedType) {
-      setFormData((prev) => ({ ...prev, type: selectedType, category: "", subcategory: "" }))
     }
-  }, [selectedType])
+
+    if (initial?.id && onUpdate) {
+      onUpdate(initial.id, values)
+    } else if (onSubmit) {
+      onSubmit(values)
+    }
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -3231,7 +3336,7 @@ function TransactionForm({ userType, onSubmit, selectedType, onTypeChange }: Tra
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">
-        <Button type="submit">Add Transaction</Button>
+        <Button type="submit">{submitLabel}</Button>
       </div>
     </form>
   )
